@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+python-multipart
+pandas
+openpyxl
+numpy
+motor
+pymongo
+python-dotenv
+pydantic
+pydantic-core
+pydantic-settings
+email-validator
+google-cloud-storage
+passlib
+python-jose
