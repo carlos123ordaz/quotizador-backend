@@ -26,11 +26,17 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://tu-dominio.com",  # Tu dominio de producción si tienes
+        "tauri://localhost",       # Para Tauri
+        "http://tauri.localhost",  # Para Tauri
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 app.include_router(product_router)
