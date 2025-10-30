@@ -91,8 +91,8 @@ def process_file(file_path: str) -> Tuple[pd.DataFrame, str, str]:
 
 
 class ExcelProcessor:
-    def __init__(self, max_workers: int = None):
-        self.max_workers = max_workers or (os.cpu_count() - 1 if os.cpu_count() > 1 else 1)
+    def __init__(self):
+        self.max_workers = 2
 
     def process_multiple_files(self, file_paths: List[str]) -> dict:
         start_time = time.time()
