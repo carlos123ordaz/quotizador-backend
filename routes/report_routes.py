@@ -4,7 +4,7 @@ from controllers.report_controller import report_controller
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
-@router.post("/generate")
+@router.post("/generate")  # Mantén este con barra porque es específico
 async def generate_report(files: List[UploadFile] = File(...)):
     for file in files:
         if not file.filename.endswith(('.xlsx', '.xls', '.xlsm')):

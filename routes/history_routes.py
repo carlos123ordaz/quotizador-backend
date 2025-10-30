@@ -1,13 +1,15 @@
-# routes/history_routes.py
-
 from typing import Optional
 from fastapi import APIRouter, Query, Body, Path
 from controllers.history_controller import history_controller
 from models.history_model import HistoryModel, HistoryResponse
 
+# ❌ ANTES: router = APIRouter(prefix="/api/history", tags=["History"])
+# ✅ AHORA: SIN barra final
 router = APIRouter(prefix="/api/history", tags=["History"])
 
-@router.get("/", response_model=dict)
+# ❌ ANTES: @router.get("/", ...)
+# ✅ AHORA: Endpoint vacío (sin barra)
+@router.get("", response_model=dict)  # SIN la barra inicial
 async def get_all_history(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=500),
@@ -33,26 +35,17 @@ async def get_statistics():
     return await history_controller.get_statistics()
 
 @router.get("/deal/{num_deal}", response_model=list)
-async def get_history_by_deal(
-    num_deal: str = Path(..., description="Número del deal")
-):
-
+async def get_history_by_deal(num_deal: str = Path(...)):
     return await history_controller.get_history_by_deal(num_deal)
 
 @router.get("/{history_id}", response_model=HistoryResponse)
-async def get_history_by_id(
-    history_id: str = Path(..., description="ID de la entrada de historial")
-):
+async def get_history_by_id(history_id: str = Path(...)):
     return await history_controller.get_history_by_id(history_id)
 
-@router.post("/", response_model=HistoryResponse, status_code=201)
-async def create_history_entry(
-    history: HistoryModel = Body(..., description="Datos de la entrada de historial")
-):
+@router.post("", response_model=HistoryResponse, status_code=201)  # SIN barra
+async def create_history_entry(history: HistoryModel = Body(...)):
     return await history_controller.create_history_entry(history)
 
 @router.delete("/{history_id}", response_model=dict)
-async def delete_history_entry(
-    history_id: str = Path(..., description="ID de la entrada de historial a eliminar")
-):
+async def delete_history_entry(history_id: str = Path(...)):
     return await history_controller.delete_history_entry(history_id)
