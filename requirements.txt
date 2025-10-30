@@ -14,3 +14,4 @@ email-validator
 google-cloud-storage
 passlib
 python-jose
+bcrypt

@@ -5,18 +5,8 @@ import json
 
 class CloudStorage:
     def __init__(self):
-        if os.getenv("GOOGLE_CREDENTIALS_JSON"):
-            creds_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
-            self.client = storage.Client.from_service_account_info(creds_info)
-        else:
-            if os.path.exists(settings.GOOGLE_CREDENTIALS_PATH):
-                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.GOOGLE_CREDENTIALS_PATH
-                self.client = storage.Client()
-            else:
-                raise RuntimeError(
-                    "No se encontraron credenciales de Google. "
-                    "Define GOOGLE_CREDENTIALS_JSON o coloca el archivo en la ruta especificada."
-                )
+        creds_info = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
+        self.client = storage.Client.from_service_account_info(creds_info)
         self.bucket = self.client.bucket(settings.GOOGLE_STORAGE_BUCKET)
 
     async def upload_file(self, file_path: str, destination_name: str) -> str:
