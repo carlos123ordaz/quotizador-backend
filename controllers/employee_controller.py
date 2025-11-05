@@ -79,7 +79,7 @@ class EmployeeController:
             cursor = collection.find(query).sort("nombre", ASCENDING).skip(skip).limit(limit)
             employees = await cursor.to_list(length=limit)
             employees_formatted = [self._format_employee(emp) for emp in employees]
-
+            print(f'1: {employees_formatted}')
             return {
                 "empleados": employees_formatted,
                 "total": total,

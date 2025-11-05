@@ -84,7 +84,7 @@ class EmployeeInDB(EmployeeBase):
 
 
 class EmployeeResponse(BaseModel):
-    _id: str
+    id: str = Field(alias="_id")
     codigo: int
     nombre: str
     activo: bool

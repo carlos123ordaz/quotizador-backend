@@ -17,7 +17,7 @@ async def create_employee(employee: EmployeeCreate):
             detail=f"Error al crear el empleado: {str(e)}"
         )
 
-@router.get("", response_model=dict)  # ✅ SIN barra
+@router.get("", response_model=dict)
 async def get_all_employees(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
@@ -44,4 +44,26 @@ async def get_employee_stats():
             detail=f"Error al obtener estadísticas: {str(e)}"
         )
 
-# ... resto de endpoints sin cambios
+@router.put("/{employee_id}", response_model=EmployeeResponse)
+async def update_employee(employee_id: str, employee: EmployeeUpdate):
+    try:
+        return await employee_controller.update_employee(employee_id, employee)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al actualizar el empleado: {str(e)}"
+        )
+
+@router.delete("/{employee_id}", response_model=dict)
+async def delete_employee(employee_id: str):
+    try:
+        return await employee_controller.delete_employee(employee_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar el empleado: {str(e)}"
+        )
