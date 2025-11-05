@@ -7,7 +7,7 @@ from models.product_model import ProductModel, ProductUpdate, ProductResponse
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 
-@router.get("", response_model=dict)
+@router.get("/", response_model=dict)
 async def get_all_products(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
