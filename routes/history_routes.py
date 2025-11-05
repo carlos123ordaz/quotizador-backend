@@ -2,14 +2,8 @@ from typing import Optional
 from fastapi import APIRouter, Query, Body, Path
 from controllers.history_controller import history_controller
 from models.history_model import HistoryModel, HistoryResponse
-
-# ❌ ANTES: router = APIRouter(prefix="/api/history", tags=["History"])
-# ✅ AHORA: SIN barra final
 router = APIRouter(prefix="/api/history", tags=["History"])
-
-# ❌ ANTES: @router.get("/", ...)
-# ✅ AHORA: Endpoint vacío (sin barra)
-@router.get("", response_model=dict)  # SIN la barra inicial
+@router.get("", response_model=dict)  
 async def get_all_history(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=500),

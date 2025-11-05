@@ -3,6 +3,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import List, Tuple
 import time
+from services.excel_utils import convert_df_to_db_format
 
 def get_df(path: str) -> pd.DataFrame:
     df = pd.read_excel(path, engine='openpyxl')
@@ -131,5 +132,20 @@ class ExcelProcessor:
                 "error": "No se pudo procesar ningún archivo",
                 "errors": errors
             }
+    def process_file_for_db(self, file_path: str) -> dict:
+        try:
+            
+            df = get_df(file_path)
+            result = convert_df_to_db_format(df, file_path)
+            return {
+                "success": True,
+                **result
+            }
 
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+            
 excel_processor = ExcelProcessor()
