@@ -7,7 +7,7 @@ from models.product_model import ProductModel, ProductUpdate, ProductResponse
 
 router = APIRouter(prefix="/api/products", tags=["Products"])
 
-@router.get("/", response_model=dict)
+@router.get("", response_model=dict)
 async def get_all_products(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
@@ -35,7 +35,7 @@ async def get_product_by_id(
 ):
     return await product_controller.get_product_by_id(product_id)
 
-@router.post("/", response_model=ProductResponse, status_code=201)
+@router.post("", response_model=ProductResponse, status_code=201)
 async def create_product(
     product: ProductModel = Body(..., description="Datos del producto a crear")
 ):

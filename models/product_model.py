@@ -27,7 +27,6 @@ class ProductUpdate(BaseModel):
 
 class ProductResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    
     id: str = Field(alias="_id")
     code: int
     name_excel: str
