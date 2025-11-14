@@ -54,5 +54,6 @@ async def login(usuario_login: UsuarioLogin):
         "apellido": usuario["apellido"],
         "iniciales": usuario["iniciales"],
         "es_lider": usuario["es_lider"],
-        "webhook_bitrix": usuario["webhook_bitrix"]
+        "webhook_bitrix": usuario["webhook_bitrix"],
+        "fecha_creacion": usuario["fecha_creacion"],
     }

@@ -4,6 +4,7 @@ import bcrypt
 from fastapi import HTTPException, status
 from models.usuario_model import UsuarioCreate
 from database import get_database
+from models.usuario_model import UsuarioUpdate, CambiarContrasena
 
 class AuthController:
     def __init__(self):
@@ -83,5 +84,107 @@ class AuthController:
             return None
         
         return usuario
+    
+    async def actualizar_perfil(self, usuario_id: str, datos: UsuarioUpdate) -> dict:
+        """Actualizar datos del perfil del usuario"""
+        from bson import ObjectId
+        db = get_database()
 
+        try:
+            # Preparar datos de actualización
+            update_data = {}
+            if datos.nombre is not None:
+                update_data["nombre"] = datos.nombre
+            if datos.apellido is not None:
+                update_data["apellido"] = datos.apellido
+            if datos.webhook_bitrix is not None:
+                update_data["webhook_bitrix"] = datos.webhook_bitrix
+
+            # Si hay iniciales nuevas, verificar que no estén en uso
+            if datos.iniciales is not None:
+                iniciales_upper = datos.iniciales.upper()
+                usuario_existente = await db[self.collection_name].find_one({
+                    "iniciales": iniciales_upper,
+                    "_id": {"$ne": ObjectId(usuario_id)}
+                })
+                if usuario_existente:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Las iniciales ya están en uso por otro usuario"
+                    )
+                update_data["iniciales"] = iniciales_upper
+
+            if datos.es_lider is not None:
+                update_data["es_lider"] = datos.es_lider
+
+            if not update_data:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No hay datos para actualizar"
+                )
+
+            update_data["fecha_actualizacion"] = datetime.utcnow()
+
+            # Actualizar en la base de datos
+            result = await db[self.collection_name].update_one(
+                {"_id": ObjectId(usuario_id)},
+                {"$set": update_data}
+            )
+
+            if result.matched_count == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Usuario no encontrado"
+                )
+
+            # Obtener usuario actualizado
+            usuario_actualizado = await db[self.collection_name].find_one(
+                {"_id": ObjectId(usuario_id)}
+            )
+
+            return usuario_actualizado
+        
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al actualizar perfil: {str(e)}"
+            )
+    async def cambiar_contrasena(self, usuario_id: str, datos: CambiarContrasena) -> bool:
+        from bson import ObjectId
+        db = get_database()
+
+        try:
+            usuario = await db[self.collection_name].find_one({"_id": ObjectId(usuario_id)})
+
+            if not usuario:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Usuario no encontrado"
+                )
+            if not self.verificar_contrasena(datos.contrasena_actual, usuario["contrasena_hash"]):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="La contraseña actual es incorrecta"
+                )
+            nueva_hash = self.hashear_contrasena(datos.contrasena_nueva)
+            result = await db[self.collection_name].update_one(
+                {"_id": ObjectId(usuario_id)},
+                {
+                    "$set": {
+                        "contrasena_hash": nueva_hash,
+                        "fecha_actualizacion": datetime.utcnow()
+                    }
+                }
+            )
+            return result.modified_count > 0
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al cambiar contraseña: {str(e)}"
+            )
 auth_controller = AuthController()

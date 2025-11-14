@@ -10,6 +10,7 @@ from routes.employee_routes import router as employee_router
 from routes.history_routes import router as history_router
 from routes.processed_excel_routes import router as processed_excel_router
 from routes.excel_routes import router as excel_router
+from routes import perfil_routes
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,6 +42,7 @@ app.include_router(employee_router)
 app.include_router(history_router)
 app.include_router(processed_excel_router)
 app.include_router(excel_router)
+app.include_router(perfil_routes.router)
 
 @app.get("/")
 def root():

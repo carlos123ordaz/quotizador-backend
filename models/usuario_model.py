@@ -133,8 +133,19 @@ class UsuarioResponse(UsuarioBase):
 class UsuarioUpdate(BaseModel):
     nombre: Optional[str] = Field(None, min_length=2, max_length=100)
     apellido: Optional[str] = Field(None, min_length=2, max_length=100)
+    iniciales: Optional[str] = Field(None, min_length=2, max_length=4)
     webhook_bitrix: Optional[str] = Field(None, min_length=10)
-    es_lider: Optional[bool] = None
+    es_lider: Optional[bool] = Field(None)
+
+    @field_validator('iniciales')
+    @classmethod
+    def validar_iniciales(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if not v.isupper():
+                raise ValueError('Las iniciales deben estar en mayúsculas')
+            if not v.isalpha():
+                raise ValueError('Las iniciales solo pueden contener letras')
+        return v
 
     @field_validator('webhook_bitrix')
     @classmethod
@@ -147,6 +158,7 @@ class UsuarioUpdate(BaseModel):
         json_schema_extra={
             "example": {
                 "nombre": "Juan Carlos",
+                "iniciales": "JCP",
                 "webhook_bitrix": "https://bitrix.example.com/webhook/nuevo123"
             }
         }
