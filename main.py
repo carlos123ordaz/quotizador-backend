@@ -10,7 +10,8 @@ from routes.employee_routes import router as employee_router
 from routes.history_routes import router as history_router
 from routes.processed_excel_routes import router as processed_excel_router
 from routes.excel_routes import router as excel_router
-from routes import perfil_routes
+from routes.perfil_routes import router as perfil_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,7 +20,7 @@ async def lifespan(app: FastAPI):
     yield
     await close_mongo_connection()
     print("Aplicación detenida")
-    
+
 app = FastAPI(
     title="Excel Manager API",
     description="API para gestión de productos, empleados, reportes Excel y integración con Bitrix CRM",
@@ -29,7 +30,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,7 +43,8 @@ app.include_router(employee_router)
 app.include_router(history_router)
 app.include_router(processed_excel_router)
 app.include_router(excel_router)
-app.include_router(perfil_routes.router)
+app.include_router(perfil_router)
+
 
 @app.get("/")
 def root():
