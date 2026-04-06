@@ -13,3 +13,4 @@ pydantic-settings
 email-validator
 google-cloud-storage
 bcrypt
+httpx
