@@ -44,6 +44,18 @@ async def get_employee_stats():
             detail=f"Error al obtener estadísticas: {str(e)}"
         )
 
+@router.post("/sync-bitrix", response_model=dict)
+async def sync_employees_from_bitrix():
+    try:
+        return await employee_controller.sync_from_bitrix()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al sincronizar desde Bitrix24: {str(e)}"
+        )
+
 @router.put("/{employee_id}", response_model=EmployeeResponse)
 async def update_employee(employee_id: str, employee: EmployeeUpdate):
     try:

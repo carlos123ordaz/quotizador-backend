@@ -1,15 +1,18 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo.collection import Collection
 from pymongo import ASCENDING, DESCENDING
 from fastapi import HTTPException, status
+import httpx
+import asyncio
 
 from models.employee_model import (
     EmployeeCreate,
     EmployeeUpdate,
     EmployeeResponse,
 )
+from config import settings
 
 class EmployeeController:
     def __init__(self):
@@ -245,6 +248,79 @@ class EmployeeController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error al obtener estadísticas: {str(e)}"
+            )
+
+    async def sync_from_bitrix(self) -> dict:
+        try:
+            base_url = settings.BITRIX24_BASE_URL
+
+            # 1. Obtener usuarios ACTIVOS de Bitrix24
+            bitrix_users = []
+            start = 0
+            async with httpx.AsyncClient(timeout=30) as client:
+                while True:
+                    resp = await client.get(
+                        f"{base_url}/user.get",
+                        params={"start": start, "FILTER[ACTIVE]": "true"}
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                    bitrix_users.extend(data.get("result", []))
+                    if "next" not in data:
+                        break
+                    start = data["next"]
+                    await asyncio.sleep(0.3)
+
+            # 2. Obtener codigos existentes en MongoDB
+            collection = self.get_collection()
+            cursor = collection.find({}, {"codigo": 1, "_id": 0})
+            existing_docs = await cursor.to_list(length=None)
+            existing_codigos = {doc["codigo"] for doc in existing_docs}
+
+            # 3. Filtrar solo los nuevos
+            def format_name(name, last_name):
+                first_initial = name[0].upper() if name else ""
+                apellido = last_name.strip().split()[0] if last_name.strip() else ""
+                return f"{first_initial}.{apellido}"
+
+            now = datetime.now(timezone.utc)
+            nuevos = []
+            for u in bitrix_users:
+                codigo = u.get("ID")
+                if codigo not in existing_codigos:
+                    nuevos.append({
+                        "codigo": codigo,
+                        "nombre": format_name(u.get("NAME", ""), u.get("LAST_NAME", "")),
+                        "activo": True,
+                        "created_at": now,
+                        "updated_at": now,
+                    })
+
+            # 4. Insertar solo los nuevos
+            insertados = []
+            if nuevos:
+                result = await collection.insert_many(nuevos)
+                insertados = [
+                    {"codigo": d["codigo"], "nombre": d["nombre"]}
+                    for d in nuevos
+                ]
+
+            return {
+                "total_bitrix": len(bitrix_users),
+                "ya_existentes": len(existing_codigos),
+                "insertados": len(insertados),
+                "detalle": insertados,
+            }
+
+        except httpx.HTTPError as e:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Error al conectar con Bitrix24: {str(e)}"
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al sincronizar: {str(e)}"
             )
 
     def _format_employee(self, employee: dict) -> EmployeeResponse:

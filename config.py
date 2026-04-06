@@ -8,6 +8,7 @@ class Settings:
     MONGODB_DB_NAME = os.getenv("MONGODB_DB_NAME")
     GOOGLE_CREDENTIALS_PATH = os.getenv("GOOGLE_CREDENTIALS_PATH")
     GOOGLE_STORAGE_BUCKET = os.getenv("GOOGLE_STORAGE_BUCKET")
+    BITRIX24_BASE_URL = os.getenv("BITRIX24_BASE_URL", "https://corsusaint.bitrix24.com/rest/4296/gzwh0355xyw5ihbc")
 
     TEMP_FOLDER = "./temp"
     MAX_WORKERS = os.cpu_count() - 1 if os.cpu_count() > 1 else 1
