@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class ProductModel(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    code: int
+    code: str
     name_excel: str
     name_bitrix: Optional[str] = None
     unidad_negocio: str
@@ -16,8 +16,8 @@ class ProductModel(BaseModel):
 
 class ProductUpdate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    
-    code: Optional[int] = None
+
+    code: Optional[str] = None
     name_excel: Optional[str] = None
     name_bitrix: Optional[str] = None
     unidad_negocio: Optional[str] = None
@@ -28,7 +28,7 @@ class ProductUpdate(BaseModel):
 class ProductResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: str = Field(alias="_id")
-    code: int
+    code: str
     name_excel: str
     name_bitrix: Optional[str] = None
     unidad_negocio: str

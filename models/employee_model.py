@@ -28,14 +28,15 @@ class PyObjectId(ObjectId):
 
 
 class EmployeeBase(BaseModel):
-    codigo: int = Field(..., description="Código único del empleado")
+    codigo: str = Field(..., description="Código único del empleado")
     nombre: str = Field(..., description="Nombre completo del empleado")
     activo: bool = Field(default=True, description="Estado del empleado")
-    departamentos: Optional[List[str]] = Field(default_factory=list, description="Departamentos del empleado")
+    departamentos: Optional[List[str]] = Field(
+        default_factory=list, description="Departamentos del empleado")
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "codigo": 123,
+                "codigo": "EMP001",
                 "nombre": "Juan Pérez García",
                 "activo": True
             }
@@ -48,7 +49,7 @@ class EmployeeCreate(EmployeeBase):
 
 
 class EmployeeUpdate(BaseModel):
-    codigo: Optional[int] = None
+    codigo: Optional[str] = None
     nombre: Optional[str] = None
     activo: Optional[bool] = None
     departamentos: Optional[List[str]] = None
@@ -87,7 +88,7 @@ class EmployeeInDB(EmployeeBase):
 
 class EmployeeResponse(BaseModel):
     id: str = Field(alias="_id")
-    codigo: int
+    codigo: str
     nombre: str
     activo: bool
     departamentos: Optional[List[str]] = Field(default_factory=list)
@@ -98,7 +99,7 @@ class EmployeeResponse(BaseModel):
         json_schema_extra={
             "example": {
                 "_id": "507f1f77bcf86cd799439011",
-                "codigo": 123,
+                "codigo": "EMP001",
                 "nombre": "Juan Pérez García",
                 "activo": True,
                 "created_at": "2024-01-15T10:30:00",

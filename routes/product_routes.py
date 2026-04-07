@@ -11,12 +11,14 @@ router = APIRouter(prefix="/api/products", tags=["Products"])
 async def get_all_products(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
-    search: Optional[str] = Query(default=None)
+    search: Optional[str] = Query(default=None),
+    activo: Optional[bool] = Query(default=None),
 ):
     return await product_controller.get_all_products(
         skip=skip,
         limit=limit,
-        search=search
+        search=search,
+        activo=activo,
     )
 
 @router.get("/code/{code}", response_model=ProductResponse)

@@ -19,11 +19,15 @@ class ProductController:
         self,
         skip: int = 0,
         limit: int = 300,
-        search: Optional[str] = None
+        search: Optional[str] = None,
+        activo: Optional[bool] = None,
     ) -> dict:
         collection = self.get_collection()
         query = {}
-        
+
+        if activo is not None:
+            query["activo"] = activo
+
         if search:
             query["$or"] = [
                 {"code": {"$regex": search, "$options": "i"}},
