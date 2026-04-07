@@ -29,12 +29,16 @@ class ProductController:
             query["activo"] = activo
 
         if search:
-            query["$or"] = [
-                {"code": {"$regex": search, "$options": "i"}},
+            or_conditions = [
                 {"name_excel": {"$regex": search, "$options": "i"}},
                 {"name_bitrix": {"$regex": search, "$options": "i"}},
                 {"unidad_negocio": {"$regex": search, "$options": "i"}},
             ]
+            try:
+                or_conditions.append({"code": int(search)})
+            except ValueError:
+                pass
+            query["$or"] = or_conditions
         
         total = await collection.count_documents(query)
         productos = []
