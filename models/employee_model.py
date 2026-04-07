@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
 from datetime import datetime
 from bson import ObjectId
 from pydantic_core import core_schema
@@ -31,6 +31,7 @@ class EmployeeBase(BaseModel):
     codigo: int = Field(..., description="Código único del empleado")
     nombre: str = Field(..., description="Nombre completo del empleado")
     activo: bool = Field(default=True, description="Estado del empleado")
+    departamentos: Optional[List[str]] = Field(default_factory=list, description="Departamentos del empleado")
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -50,6 +51,7 @@ class EmployeeUpdate(BaseModel):
     codigo: Optional[int] = None
     nombre: Optional[str] = None
     activo: Optional[bool] = None
+    departamentos: Optional[List[str]] = None
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -88,6 +90,7 @@ class EmployeeResponse(BaseModel):
     codigo: int
     nombre: str
     activo: bool
+    departamentos: Optional[List[str]] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 
