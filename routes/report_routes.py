@@ -17,9 +17,11 @@ async def generate_report(files: List[UploadFile] = File(...)):
 @router.get("/history")
 async def get_reports_history(
     limit: int = Query(default=50, ge=1, le=100),
-    skip: int = Query(default=0, ge=0)
+    skip: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None),
+    status: str | None = Query(default=None)
 ):
-    return await report_controller.get_reports_history(limit=limit, skip=skip)
+    return await report_controller.get_reports_history(limit=limit, skip=skip, search=search, status=status)
 
 @router.get("/stats")
 async def get_report_stats():

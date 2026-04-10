@@ -28,6 +28,10 @@ async def get_all_history(
 async def get_statistics():
     return await history_controller.get_statistics()
 
+@router.get("/dashboard", response_model=dict)
+async def get_dashboard(year: Optional[int] = Query(default=None)):
+    return await history_controller.get_dashboard(year=year)
+
 @router.get("/deal/{num_deal}", response_model=list)
 async def get_history_by_deal(num_deal: str = Path(...)):
     return await history_controller.get_history_by_deal(num_deal)

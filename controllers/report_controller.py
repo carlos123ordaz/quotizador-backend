@@ -86,14 +86,29 @@ class ReportController:
             await db.reports.insert_one(error_report.model_dump(by_alias=True, exclude={'id'}))
             raise HTTPException(status_code=500, detail=f"Error al procesar archivos: {str(e)}")
 
-    async def get_reports_history(self, limit: int = 50, skip: int = 0):
+    async def get_reports_history(self, limit: int = 50, skip: int = 0, search: str | None = None, status: str | None = None):
+        from bson import ObjectId
         db = self.get_db()
-        cursor = db.reports.find().sort("created_at", -1).skip(skip).limit(limit)
+        query = {}
+
+        if status and status != "all":
+            query["status"] = status
+
+        if search:
+            search = search.strip()
+            search_filters = [{"filename": {"$regex": search, "$options": "i"}}]
+
+            if ObjectId.is_valid(search):
+                search_filters.append({"_id": ObjectId(search)})
+
+            query["$or"] = search_filters
+
+        cursor = db.reports.find(query).sort("created_at", -1).skip(skip).limit(limit)
         reports = await cursor.to_list(length=limit)
         for report in reports:
             if "_id" in report:
                 report["_id"] = str(report["_id"])
-        total = await db.reports.count_documents({})
+        total = await db.reports.count_documents(query)
         return {
             "total": total,
             "reports": reports
@@ -133,6 +148,7 @@ class ReportController:
         db = self.get_db()
         total = await db.reports.count_documents({})
         success = await db.reports.count_documents({"status": "success"})
+        partial = await db.reports.count_documents({"status": "partial"})
         errors = await db.reports.count_documents({"status": "error"})
         from datetime import datetime, timedelta
         start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -143,6 +159,7 @@ class ReportController:
         return {
             "total": total,
             "success": success,
+            "partial": partial,
             "errors": errors,
             "this_month": this_month
         }
