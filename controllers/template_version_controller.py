@@ -23,10 +23,12 @@ class TemplateVersionController:
 
     async def verify_lider(self, usuario_id: str):
         try:
-            collection = self.get_usuarios_collection()
-            user = await collection.find_one({"_id": ObjectId(usuario_id)})
+            oid = ObjectId(usuario_id)
         except Exception:
             raise HTTPException(status_code=400, detail="ID de usuario inválido")
+
+        collection = self.get_usuarios_collection()
+        user = await collection.find_one({"_id": oid})
 
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
