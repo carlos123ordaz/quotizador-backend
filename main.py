@@ -11,6 +11,7 @@ from routes.history_routes import router as history_router
 from routes.processed_excel_routes import router as processed_excel_router
 from routes.excel_routes import router as excel_router
 from routes.perfil_routes import router as perfil_router
+from routes.template_version_routes import router as template_version_router
 
 
 @asynccontextmanager
@@ -44,6 +45,7 @@ app.include_router(history_router)
 app.include_router(processed_excel_router)
 app.include_router(excel_router)
 app.include_router(perfil_router)
+app.include_router(template_version_router)
 
 
 @app.get("/")
