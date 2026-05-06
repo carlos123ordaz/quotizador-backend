@@ -5,16 +5,37 @@ from typing import List, Tuple
 import time
 from services.excel_utils import convert_df_to_db_format
 
+_TEMPLATE_CONFIGS = [
+    # Plantilla 2 (más reciente) — anclas en filas 350-352
+    {
+        'anchors': [(350, 112), (351, 112), (352, 112)],
+        'num_deal': (350, 112),
+        'cliente':  (355, 70),
+        'coti':     (351, 112),
+    },
+    # Plantilla 1 (legado) — anclas en filas 233-235
+    {
+        'anchors': [(233, 112), (234, 112), (235, 112)],
+        'num_deal': (233, 112),
+        'cliente':  (238, 70),
+        'coti':     (234, 112),
+    },
+]
+
+def _detect_template(df: pd.DataFrame) -> dict:
+    def score(cfg):
+        return sum(
+            1 for r, c in cfg['anchors']
+            if pd.notna(df.iloc[r, c]) and str(df.iloc[r, c]).strip() not in ('', 'nan')
+        )
+    return max(_TEMPLATE_CONFIGS, key=score)
+
 def get_df(path: str) -> pd.DataFrame:
     df = pd.read_excel(path, engine='openpyxl')
-    if pd.isna(df.iloc[233, 112]):
-        num_deal =  df.iloc[350, 112]
-        cliente = df.iloc[355, 70]
-        coti_split = str(df.iloc[351, 112]).split('-')
-    else:
-        num_deal = df.iloc[233, 112]
-        cliente = df.iloc[238, 70]
-        coti_split = str(df.iloc[234, 112]).split('-')
+    tpl = _detect_template(df)
+    num_deal   = df.iloc[tpl['num_deal'][0], tpl['num_deal'][1]]
+    cliente    = df.iloc[tpl['cliente'][0],  tpl['cliente'][1]]
+    coti_split = str(df.iloc[tpl['coti'][0], tpl['coti'][1]]).split('-')
     num_coti = coti_split[1] if len(coti_split) > 1 else ''
     num_revi = coti_split[2] if len(coti_split) > 2 else ''
     top = df[df['Factor STD'] == "Precio Lista"].index[0] if (df['Factor STD'] == "Precio Lista").any() else 0
