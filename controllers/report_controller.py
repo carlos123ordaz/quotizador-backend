@@ -245,6 +245,10 @@ class ReportController:
         for record in records:
             if "_id" in record:
                 record["_id"] = str(record["_id"])
+            # Limpiar valores NaN que no son serializables a JSON
+            for key, value in list(record.items()):
+                if isinstance(value, float) and (value != value):  # NaN check
+                    record[key] = None
         total = await db.accumulated_records.count_documents(query)
         return {"total": total, "records": records}
 
@@ -316,6 +320,10 @@ class ReportController:
 
         if records:
             for record in records:
+                # Limpiar NaN antes de insertar
+                for key, value in list(record.items()):
+                    if isinstance(value, float) and (value != value):
+                        record[key] = None
                 record["_accumulated_at"] = datetime.utcnow()
                 record["_source"] = source
                 record["_source_filename"] = filename
