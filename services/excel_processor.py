@@ -44,14 +44,19 @@ def get_df(path: str) -> pd.DataFrame:
     top = df[df['Factor STD'] == "Precio Lista"].index[0] if (df['Factor STD'] == "Precio Lista").any() else 0
     new_header = df.iloc[top]
     df = df.iloc[top+1:].copy()
-    df.columns = new_header
+    df.columns = range(len(df.columns))  # temp numeric columns to avoid issues
     df.reset_index(drop=True, inplace=True)
-    df.columns = df.columns.astype(str)
-    cols = pd.Series(df.columns)
-    for dup in cols[cols.duplicated()].unique():
-        dup_indices = cols[cols == dup].index.tolist()
-        cols.iloc[dup_indices] = [f"{dup}_{i}" for i in range(len(dup_indices))]
-    df.columns = cols
+    header_values = [str(v) if pd.notna(v) else f"col_{i}" for i, v in enumerate(new_header)]
+    seen = {}
+    unique_cols = []
+    for name in header_values:
+        if name in seen:
+            seen[name] += 1
+            unique_cols.append(f"{name}_{seen[name]}")
+        else:
+            seen[name] = 0
+            unique_cols.append(name)
+    df.columns = unique_cols
     df.dropna(axis=1, how='all', inplace=True)
     mask = (
         pd.notna(df['Precio Compra Unitario']) & 
