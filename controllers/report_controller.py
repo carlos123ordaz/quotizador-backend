@@ -105,6 +105,11 @@ class ReportController:
                 "timestamp": datetime.now().isoformat()
             }
 
+        except HTTPException:
+            for temp_path in temp_paths:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+            raise
         except Exception as e:
             logger.error(f"Error en generate_report: {str(e)}")
             logger.error(traceback.format_exc())

@@ -1,9 +1,12 @@
 import pandas as pd
 import os
-from concurrent.futures import ProcessPoolExecutor, as_completed
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Tuple
 import time
 from services.excel_utils import convert_df_to_db_format
+
+logger = logging.getLogger(__name__)
 
 _TEMPLATE_CONFIGS = [
     # Plantilla 2 (más reciente) — anclas en filas 350-352
@@ -121,7 +124,7 @@ class ExcelProcessor:
         dataframes = []
         errors = []
         
-        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             future_to_file = {
                 executor.submit(process_file, file_path): file_path 
                 for file_path in file_paths
@@ -148,6 +151,8 @@ class ExcelProcessor:
                 "processing_time": round(processing_time, 2)
             }
         else:
+            for err in errors:
+                logger.error(f"Error procesando {err['file']}: {err['error']}")
             return {
                 "success": False,
                 "error": "No se pudo procesar ningún archivo",
