@@ -14,6 +14,7 @@ from models.employee_model import (
 )
 from config import settings
 
+
 class EmployeeController:
     def __init__(self):
         self.db = None
@@ -30,7 +31,8 @@ class EmployeeController:
             db = self.get_db()
             self.collection = db["employees"]
             self.collection.create_index("codigo", unique=True)
-            self.collection.create_index([("nombre", "text"), ("codigo", "text")])
+            self.collection.create_index(
+                [("nombre", "text"), ("codigo", "text")])
         return self.collection
 
     async def create_employee(self, employee_data: EmployeeCreate) -> EmployeeResponse:
@@ -49,10 +51,10 @@ class EmployeeController:
             employee_dict["updated_at"] = datetime.utcnow()
 
             result = await collection.insert_one(employee_dict)
-            
+
             created_employee = await collection.find_one({"_id": result.inserted_id})
             return self._format_employee(created_employee)
-            
+
         except HTTPException:
             raise
         except Exception as e:
@@ -79,17 +81,18 @@ class EmployeeController:
                     {"codigo": {"$regex": search, "$options": "i"}}
                 ]
             total = await collection.count_documents(query)
-            cursor = collection.find(query).sort("nombre", ASCENDING).skip(skip).limit(limit)
+            cursor = collection.find(query).sort(
+                "nombre", ASCENDING).skip(skip).limit(limit)
             employees = await cursor.to_list(length=limit)
-            employees_formatted = [self._format_employee(emp) for emp in employees]
-            print(f'1: {employees_formatted}')
+            employees_formatted = [
+                self._format_employee(emp) for emp in employees]
             return {
                 "empleados": employees_formatted,
                 "total": total,
                 "skip": skip,
                 "limit": limit
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -106,15 +109,15 @@ class EmployeeController:
 
             collection = self.get_collection()
             employee = await collection.find_one({"_id": ObjectId(employee_id)})
-            
+
             if not employee:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Empleado con ID {employee_id} no encontrado"
                 )
-                
+
             return self._format_employee(employee)
-            
+
         except HTTPException:
             raise
         except Exception as e:
@@ -127,11 +130,11 @@ class EmployeeController:
         try:
             collection = self.get_collection()
             employee = await collection.find_one({"codigo": codigo})
-            
+
             if employee:
                 return self._format_employee(employee)
             return None
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -167,13 +170,13 @@ class EmployeeController:
             update_data = {
                 k: v for k, v in employee_data.model_dump(exclude_unset=True).items()
             }
-            
+
             if not update_data:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="No se proporcionaron datos para actualizar"
                 )
-                
+
             update_data["updated_at"] = datetime.utcnow()
             await collection.update_one(
                 {"_id": ObjectId(employee_id)},
@@ -181,7 +184,7 @@ class EmployeeController:
             )
             updated_employee = await collection.find_one({"_id": ObjectId(employee_id)})
             return self._format_employee(updated_employee)
-            
+
         except HTTPException:
             raise
         except Exception as e:
@@ -206,7 +209,7 @@ class EmployeeController:
                     detail=f"Empleado con ID {employee_id} no encontrado"
                 )
             result = await collection.delete_one({"_id": ObjectId(employee_id)})
-            
+
             if result.deleted_count == 0:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -217,7 +220,7 @@ class EmployeeController:
                 "success": True,
                 "message": "Empleado eliminado correctamente"
             }
-            
+
         except HTTPException:
             raise
         except Exception as e:
@@ -232,7 +235,8 @@ class EmployeeController:
             total = await collection.count_documents({})
             activos = await collection.count_documents({"activo": True})
             inactivos = await collection.count_documents({"activo": False})
-            start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            start_of_month = datetime.now().replace(
+                day=1, hour=0, minute=0, second=0, microsecond=0)
             this_month = await collection.count_documents({
                 "created_at": {"$gte": start_of_month}
             })
@@ -243,7 +247,7 @@ class EmployeeController:
                 "inactivos": inactivos,
                 "este_mes": this_month
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -280,7 +284,8 @@ class EmployeeController:
             # 3. Filtrar solo los nuevos
             def format_name(name, last_name):
                 first_initial = name[0].upper() if name else ""
-                apellido = last_name.strip().split()[0] if last_name.strip() else ""
+                apellido = last_name.strip().split()[
+                    0] if last_name.strip() else ""
                 return f"{first_initial}.{apellido}"
 
             now = datetime.now(timezone.utc)

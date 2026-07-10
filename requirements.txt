@@ -11,6 +11,6 @@ pydantic
 pydantic-core
 pydantic-settings
 email-validator
-google-cloud-storage
+azure-storage-blob
 bcrypt
 httpx
