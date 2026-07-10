@@ -54,17 +54,17 @@ class ReportController:
             inserted = await db.reports.insert_one(report_data.model_dump(by_alias=True, exclude={'id'}))
             report_id = inserted.inserted_id
 
-            # Guardar los nuevos registros en la colección de acumulados con referencia al reporte
+            # Acumular registros (reemplaza si el archivo ya fue subido)
+            filenames = [f.filename for f in files]
+            source_filename = ", ".join(filenames) if len(filenames) > 1 else filenames[0] if filenames else "report"
             new_records = result["dataframe"].to_dict(orient="records")
-            if new_records:
-                for record in new_records:
-                    record["_accumulated_at"] = datetime.utcnow()
-                    record["_report_id"] = report_id
-                await db.accumulated_records.insert_many(new_records)
+            await self._accumulate_records(
+                db, new_records, source_filename, source="report", report_id=report_id
+            )
 
             # Obtener TODOS los registros acumulados para generar el Excel
             all_accumulated = await db.accumulated_records.find(
-                {}, {"_id": 0, "_accumulated_at": 0, "_report_id": 0}
+                {}, {"_id": 0, "_accumulated_at": 0, "_report_id": 0, "_source": 0, "_source_filename": 0}
             ).to_list(length=None)
 
             df_accumulated = pd.DataFrame(all_accumulated) if all_accumulated else result["dataframe"]
@@ -234,6 +234,7 @@ class ReportController:
                 {"Código Completo": {"$regex": search, "$options": "i"}},
                 {"Familia": {"$regex": search, "$options": "i"}},
                 {"Departamento": {"$regex": search, "$options": "i"}},
+                {"_source_filename": {"$regex": search, "$options": "i"}},
             ]
 
         cursor = db.accumulated_records.find(
@@ -250,7 +251,7 @@ class ReportController:
     async def download_accumulated(self):
         db = self.get_db()
         all_records = await db.accumulated_records.find(
-            {}, {"_id": 0, "_accumulated_at": 0, "_report_id": 0}
+            {}, {"_id": 0, "_accumulated_at": 0, "_report_id": 0, "_source": 0, "_source_filename": 0}
         ).to_list(length=None)
 
         if not all_records:
@@ -300,5 +301,67 @@ class ReportController:
             "deleted_count": result.deleted_count,
             "message": "Datos acumulados eliminados correctamente"
         }
+
+    async def _accumulate_records(self, db, records: list, filename: str, source: str, report_id=None) -> dict:
+        """Método interno para acumular registros. Reemplaza si el archivo ya fue subido."""
+        deleted_count = 0
+        existing = await db.accumulated_records.count_documents(
+            {"_source_filename": filename}
+        )
+        if existing > 0:
+            delete_result = await db.accumulated_records.delete_many(
+                {"_source_filename": filename}
+            )
+            deleted_count = delete_result.deleted_count
+
+        if records:
+            for record in records:
+                record["_accumulated_at"] = datetime.utcnow()
+                record["_source"] = source
+                record["_source_filename"] = filename
+                if report_id:
+                    record["_report_id"] = report_id
+            await db.accumulated_records.insert_many(records)
+
+        return {
+            "replaced": deleted_count > 0,
+            "records_replaced": deleted_count,
+            "records_added": len(records),
+        }
+
+    async def accumulate_from_file(self, file: UploadFile) -> dict:
+        temp_path = None
+        try:
+            temp_path = os.path.join(settings.TEMP_FOLDER, file.filename)
+            with open(temp_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+            db = self.get_db()
+
+            result = excel_processor.process_multiple_files([temp_path])
+            if not result["success"]:
+                raise HTTPException(status_code=400, detail=result.get("error", "Error al procesar archivo"))
+
+            new_records = result["dataframe"].to_dict(orient="records")
+            acc = await self._accumulate_records(db, new_records, file.filename, source="bitrix")
+
+            return {
+                "success": True,
+                **acc,
+                "filename": file.filename,
+                "message": f"{acc['records_added']} registros acumulados desde '{file.filename}'" + (
+                    f" (se reemplazaron {acc['records_replaced']} registros anteriores)" if acc['replaced'] else ""
+                )
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error en accumulate_from_file: {str(e)}")
+            logger.error(traceback.format_exc())
+            raise HTTPException(status_code=500, detail=f"Error al acumular registros: {str(e)}")
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
 
 report_controller = ReportController()

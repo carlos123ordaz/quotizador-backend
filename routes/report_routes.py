@@ -51,6 +51,15 @@ async def download_accumulated():
         background=None,
     )
 
+@router.post("/accumulated/from-file")
+async def accumulate_from_file(file: UploadFile = File(...)):
+    if not file.filename.endswith(('.xlsx', '.xls', '.xlsm')):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Archivo {file.filename} no es un archivo Excel válido"
+        )
+    return await report_controller.accumulate_from_file(file)
+
 @router.delete("/accumulated/clear")
 async def clear_accumulated():
     return await report_controller.clear_accumulated()
