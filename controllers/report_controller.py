@@ -1,5 +1,7 @@
 import os
 import shutil
+import logging
+import traceback
 from datetime import datetime
 from typing import List
 import pandas as pd
@@ -9,6 +11,8 @@ from database import get_database
 from models.report_model import ReportModel, ErrorDetail
 from services.excel_processor import excel_processor
 from services.cloud_storage import cloud_storage
+
+logger = logging.getLogger(__name__)
 
 class ReportController:
     def __init__(self):
@@ -102,6 +106,8 @@ class ReportController:
             }
 
         except Exception as e:
+            logger.error(f"Error en generate_report: {str(e)}")
+            logger.error(traceback.format_exc())
             for temp_path in temp_paths:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
